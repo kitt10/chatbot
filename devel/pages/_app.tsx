@@ -5,6 +5,7 @@ import DataContext from '../context/DataContext'
 import useMain from '../hooks/useMain'
 import useData from '../hooks/useData'
 import { useEffect } from 'react'
+import Scripts from '../components/core/Scripts'
 
 const MainApp = ({ Component, pageProps }: AppProps) => {
 
@@ -21,6 +22,7 @@ const MainApp = ({ Component, pageProps }: AppProps) => {
     <MainContext.Provider value={mainContext}>
       <DataContext.Provider value={dataContext}>
         <Global styles={mainContext.style.globalStyle} />
+        <Scripts />
         <Component {...pageProps} />
       </DataContext.Provider>
     </MainContext.Provider>

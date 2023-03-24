@@ -14,7 +14,7 @@ export const colors = {
   }
   
   export const view = {
-    headerHeight: '40px'
+    headerHeight: '50px'
 }
 
 export const pageS = css({

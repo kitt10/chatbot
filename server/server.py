@@ -13,6 +13,14 @@ class EP_Web(RequestHandler):
     def get(self):
         self.render('../deploy/index.html')
 
+    def check_origin(self, origin):
+        return True
+
+    def set_default_headers(self, *args, **kwargs):
+        self.set_header("Access-Control-Allow-Origin", "*")
+        self.set_header("Access-Control-Allow-Headers", "x-requested-with")
+        self.set_header("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
+
 class EP_Log(RequestHandler):
     
     def initialize(self, webserver):
@@ -41,8 +49,8 @@ class EP_Query(RequestHandler):
 
     def post(self):
         query = json_decode(self.request.body)
-        self.webserver.log(f'Query: {query}')
-        self.write(dumps(self.worker.react(q=query['q'])))
+        self.webserver.log(f'New message: {query}')
+        self.write(dumps(self.worker.react(q=query['message'])))
         
     def check_origin(self, origin):
         return True
@@ -87,9 +95,10 @@ class WebServer:
                  
 class Worker:
     
-    def __init__(self, base_static_path, t5_config):
+    def __init__(self, base_static_path, t5_config, verbose=True):
         self.base_static_path = base_static_path
         self.config = t5_config
+        self.verbose = verbose
 
         self.t5 = T5(self.config)
         self.log('T5 initialized.')
@@ -98,9 +107,9 @@ class Worker:
         t0 = time()
         ans = self.t5.predict(q)
         dt = time()-t0
-        res = {'ans': ans, 'dt': dt}
-        self.log(f'q: {q}')
-        self.res(f'res: {res}')
+        res = {'text': ans, 'dt': round(dt, 4)}
+        self.log(f'message: {q}')
+        self.log(f'reply: {res}')
         return res
         
     def log(self, buf):
@@ -112,14 +121,17 @@ if __name__ == '__main__':
 
     SERVER_PORT = 6841
     RELATIVE_STATIC_PATH = '../deploy'
-    BASE_PATH = '/Users/kitt/projects/chatbot/server'
+    BASE_PATH = '/home/kitt/projects/chatbot/server'
+    TOKENIZER = 'sentencepiece.model'           # English
+    #TOKENIZER = 'T5_32k_CCcs.model'            # Czech
     
     ## -- T5 config
     t5_config = {
-        'tokenizer': f'{BASE_PATH}/T5_32k_CCcs.model',
+        'tokenizer': join(BASE_PATH, 'tokenizer', TOKENIZER),
         't5_model': {
-            'pre_trained': f'{BASE_PATH}/model'
-        }
+            'pre_trained': join(BASE_PATH, 'model')
+        },
+        'choose_from_n': 3
     }
     
     worker = Worker(base_static_path=RELATIVE_STATIC_PATH, t5_config=t5_config)
